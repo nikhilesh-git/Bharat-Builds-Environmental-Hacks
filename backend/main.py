@@ -35,8 +35,12 @@ from fastapi import FastAPI, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from mangum import Mangum
 from pydantic import BaseModel, Field
+
+try:
+    from mangum import Mangum
+except ImportError:
+    Mangum = None
 
 from backend.agent import estimate as agent_estimate
 from backend.notify import notify
@@ -463,4 +467,4 @@ async def get_platform_stats():
 # AWS Lambda Handler
 # ---------------------------------------------------------------------------
 
-handler = Mangum(app)
+handler = Mangum(app) if Mangum is not None else None

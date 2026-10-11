@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>कबाड़ी कनेक्ट (Kabadi Connect) — कबाड़ीवाला साथी पोर्टल</title>
-  
+  <title>कबाड़ी कनेक्ट (Kabadi Connect) — React Collector Portal</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -33,408 +33,485 @@
       }
     }
   </script>
-  
-  <!-- Custom Styles & Fonts -->
-  <link rel="stylesheet" href="/frontend/style.css">
+
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="/static/style.css">
+
+  <!-- React 18 & Babel Standalone CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.4/babel.min.js"></script>
 </head>
-<body class="min-h-full flex flex-col text-slate-800 font-devanagari antialiased bg-slate-100 selection:bg-brand-500 selection:text-white">
+<body class="min-h-full flex flex-col text-slate-800 font-devanagari antialiased bg-slate-100">
+  <div id="root"></div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-30 bg-slate-900 border-b border-slate-800 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="/kabadi" class="flex items-center gap-2.5">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-md">
-            🚛
-          </div>
-          <div>
-            <h1 class="font-extrabold text-lg sm:text-xl text-white tracking-tight leading-tight flex items-center gap-2">
-              <span data-i18n="brand_title">कबाड़ी कनेक्ट</span>
-              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">साथी पोर्टल</span>
-            </h1>
-            <p class="text-xs text-slate-400 hidden sm:block" data-i18n="kabadi_hero_subtitle">अपने इलाके में घरों से सीधे कबाड़ पिकअप स्वीकार करें।</p>
-          </div>
-        </a>
-      </div>
+  <!-- React 18 Application Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
 
-      <div class="flex items-center gap-3">
-        <!-- Household Link -->
-        <a href="/household" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700">
-          🏠 <span class="ml-1.5" data-i18n="nav_household">घर के लिए</span>
-        </a>
-
-        <!-- Language Toggle -->
-        <button id="lang-toggle-btn" onclick="KabadiApp.toggleLang()" type="button" class="touch-target inline-flex items-center justify-center px-3.5 py-2 text-sm font-bold text-slate-100 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-lg border border-slate-700 transition shadow-sm">
-          🌐 <span>English में देखें</span>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Container -->
-  <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-
-    <!-- Collector Identity & Sync Bar (High Contrast) -->
-    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div class="flex-grow max-w-md">
-        <label for="collector-name-input" class="block text-sm font-extrabold text-slate-800 mb-1 flex items-center gap-1.5" data-i18n="label_collector_name">
-          <span>👤</span> आपका नाम दर्ज करें (Collector Name):
-        </label>
-        <div class="relative">
-          <input type="text" id="collector-name-input"
-            class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-900 font-bold placeholder-slate-400 transition"
-            data-i18n-placeholder="collector_name_placeholder"
-            placeholder="उदा. रमेश कुमार / सुरेश कबाड़ी"
-            value="रमेश कुमार">
-        </div>
-      </div>
-
-      <!-- Sync Status & Stats -->
-      <div class="flex items-center gap-4 sm:self-end">
-        <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-center">
-          <span class="block text-xs font-semibold text-slate-500 uppercase">उपलब्ध</span>
-          <span id="stat-open-count" class="text-xl font-extrabold text-emerald-600">0</span>
-        </div>
-        <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-center">
-          <span class="block text-xs font-semibold text-slate-500 uppercase">स्वीकृत</span>
-          <span id="stat-accepted-count" class="text-xl font-extrabold text-slate-800">0</span>
-        </div>
-        <div class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-          <span data-i18n="auto_refresh_badge">🔴 लाइव अपडेट (5s)</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Alert / Toast Banner -->
-    <div id="toast-message" class="hidden bg-emerald-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-between transition-all">
-      <span id="toast-text">पिकअप सफलतापूर्वक स्वीकार कर लिया गया!</span>
-      <button onclick="dismissToast()" class="text-white hover:text-emerald-200 text-sm font-bold ml-4">✕</button>
-    </div>
-
-    <!-- SECTION 1: Open Pickup Requests -->
-    <section class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-          <span>📦</span> <span data-i18n="tab_open_requests">उपलब्ध अनुरोध (Open Requests)</span>
-        </h2>
-        <button onclick="fetchRequests()" type="button" class="text-sm font-bold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg border border-brand-200 transition">
-          🔄 रिफ्रेश करें
-        </button>
-      </div>
-
-      <!-- Loading Skeleton (Initial Load) -->
-      <div id="open-requests-skeleton" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
-          <div class="h-6 skeleton-shimmer rounded w-2/3"></div>
-          <div class="h-4 skeleton-shimmer rounded w-1/2"></div>
-          <div class="h-12 skeleton-shimmer rounded"></div>
-          <div class="h-10 skeleton-shimmer rounded"></div>
-        </div>
-        <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
-          <div class="h-6 skeleton-shimmer rounded w-2/3"></div>
-          <div class="h-4 skeleton-shimmer rounded w-1/2"></div>
-          <div class="h-12 skeleton-shimmer rounded"></div>
-          <div class="h-10 skeleton-shimmer rounded"></div>
-        </div>
-      </div>
-
-      <!-- Open Requests Grid Container -->
-      <div id="open-requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Rendered dynamically by JS -->
-      </div>
-
-      <!-- Empty State for Open Requests -->
-      <div id="no-open-view" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
-        <div class="text-4xl">📭</div>
-        <h3 class="text-lg font-bold text-slate-800" data-i18n="no_open_requests">
-          वर्तमान में कोई नया खुला अनुरोध उपलब्ध नहीं है। 5 सेकंड में ऑटो-रिफ्रेश हो रहा है...
-        </h3>
-      </div>
-    </section>
-
-    <!-- SECTION 2: Accepted Requests List -->
-    <section class="space-y-4 pt-6 border-t border-slate-200">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
-          <span>✅</span> <span data-i18n="tab_accepted_requests">मेरे स्वीकृत अनुरोध (Accepted)</span>
-        </h2>
-      </div>
-
-      <!-- Accepted Requests Container -->
-      <div id="accepted-requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Rendered dynamically by JS -->
-      </div>
-
-      <!-- Empty State for Accepted Requests -->
-      <div id="no-accepted-view" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
-        <div class="text-4xl">📝</div>
-        <h3 class="text-lg font-bold text-slate-600" data-i18n="no_accepted_requests">
-          आपने अभी तक कोई अनुरोध स्वीकार नहीं किया है।
-        </h3>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Footer -->
-  <footer class="mt-auto border-t border-slate-200 bg-white py-6">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
-      <div class="flex items-center gap-2">
-        <span>© 2026 कबाड़ी कनेक्ट (Kabadi Connect)</span>
-        <span>•</span>
-        <span>AWS Hackathon — Waste & Energy Track</span>
-      </div>
-      <div class="flex items-center gap-4">
-        <a href="/household" class="hover:text-slate-800 font-semibold" data-i18n="nav_household">घर के लिए</a>
-        <a href="/kabadi" class="hover:text-slate-800 font-semibold" data-i18n="nav_kabadi">कबाड़ीवाला पोर्टल</a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Page Script -->
-  <script src="/frontend/app.js"></script>
-  <script>
-    let pollInterval = null;
-    let allRequests = [];
-
-    document.addEventListener("DOMContentLoaded", () => {
-      KabadiApp.updateStaticTranslations();
-
-      // Restore collector name from localStorage if available
-      const savedName = localStorage.getItem("kabadi_collector_name");
-      if (savedName) {
-        document.getElementById("collector-name-input").value = savedName;
+    const translations = {
+      hi: {
+        brand_title: "कबाड़ी कनेक्ट साथी",
+        brand_tagline: "घर-घर से कबाड़ पिकअप करें • सही कमाई और लाइव बुकिंग",
+        nav_household: "घर के लिए (Household)",
+        nav_rates: "📊 बाज़ार भाव (Rates)",
+        toggle_lang: "English में देखें",
+        collector_name_label: "आपका नाम दर्ज करें (Collector Name):",
+        stat_open: "उपलब्ध पिकअप",
+        stat_accepted: "स्वीकृत",
+        stat_live_sync: "🔴 लाइव सिंक (5s)",
+        search_placeholder: "इलाका या ग्राहक का नाम खोजें...",
+        filter_all: "सभी (All)",
+        filter_high_value: "₹500+ अधिक मूल्य",
+        filter_sample: "नमूना केवल",
+        tab_open: "उपलब्ध अनुरोध (Open Requests)",
+        tab_accepted: "मेरे स्वीकृत अनुरोध (Accepted)",
+        badge_sample: "नमूना डेटा (Sample)",
+        badge_accepted: "स्वीकृत (Accepted)",
+        btn_accept: "पिकअप स्वीकार करें",
+        btn_accepting: "स्वीकार हो रहा है...",
+        no_open: "वर्तमान में कोई नया अनुरोध उपलब्ध नहीं है। 5 सेकंड में ऑटो-रिफ्रेश हो रहा है...",
+        no_accepted: "आपने अभी तक कोई अनुरोध स्वीकार नहीं किया है।",
+        toast_success: "पिकअप सफलतापूर्वक स्वीकार कर लिया गया!",
+        rate_modal_title: "📈 दिल्ली-एनसीआर कबाड़ बाज़ार भाव (Live Rate Card)",
+        close: "बंद करें",
+        req_collector_name: "कृपया पहले अपना नाम दर्ज करें!"
+      },
+      en: {
+        brand_title: "Kabadi Connect Partner",
+        brand_tagline: "Doorstep Scrap Pickups • Guaranteed Earnings & Live Sync",
+        nav_household: "Household Portal",
+        nav_rates: "📊 Live Rates",
+        toggle_lang: "हिंदी में देखें",
+        collector_name_label: "Your Name (Collector Name):",
+        stat_open: "Available",
+        stat_accepted: "Accepted",
+        stat_live_sync: "🔴 Live Sync (5s)",
+        search_placeholder: "Search locality or customer name...",
+        filter_all: "All",
+        filter_high_value: "₹500+ High Value",
+        filter_sample: "Sample Only",
+        tab_open: "Open Requests",
+        tab_accepted: "My Accepted Pickups",
+        badge_sample: "Sample Data",
+        badge_accepted: "Accepted",
+        btn_accept: "Accept Pickup",
+        btn_accepting: "Accepting...",
+        no_open: "No open requests available right now. Auto-refreshing every 5s...",
+        no_accepted: "You have not accepted any pickups yet.",
+        toast_success: "Pickup accepted successfully!",
+        rate_modal_title: "📈 Delhi-NCR Scrap Market Rates (Live Rate Card)",
+        close: "Close",
+        req_collector_name: "Please enter your collector name above first!"
       }
+    };
 
-      document.getElementById("collector-name-input").addEventListener("input", (e) => {
-        localStorage.setItem("kabadi_collector_name", e.target.value.trim());
-      });
+    function App() {
+      const [lang, setLang] = useState(() => localStorage.getItem("kabadi_lang") || "hi");
+      const [collectorName, setCollectorName] = useState(() => localStorage.getItem("kabadi_collector_name") || "रमेश कुमार");
+      const [requests, setRequests] = useState([]);
+      const [activeTab, setActiveTab] = useState("open"); // "open" | "accepted"
+      const [searchQuery, setSearchQuery] = useState("");
+      const [filterCategory, setFilterCategory] = useState("all"); // "all" | "high_value" | "sample"
+      const [toastMsg, setToastMsg] = useState(null);
+      const [showRateModal, setShowRateModal] = useState(false);
+      const [rateCardList, setRateCardList] = useState([]);
+      const [acceptingId, setAcceptingId] = useState(null);
 
-      // Initial fetch
-      fetchRequests();
+      const t = translations[lang] || translations.hi;
 
-      // Start 5s polling
-      pollInterval = setInterval(fetchRequests, 5000);
-    });
+      const toggleLang = () => {
+        const next = lang === "hi" ? "en" : "hi";
+        setLang(next);
+        localStorage.setItem("kabadi_lang", next);
+      };
 
-    window.addEventListener("langchange", () => {
-      renderRequests(allRequests);
-    });
+      const handleNameChange = (val) => {
+        setCollectorName(val);
+        localStorage.setItem("kabadi_collector_name", val);
+      };
 
-    function showToast(msg) {
-      const toast = document.getElementById("toast-message");
-      const text = document.getElementById("toast-text");
-      text.textContent = msg;
-      toast.classList.remove("hidden");
-      setTimeout(() => dismissToast(), 4000);
-    }
+      // Fetch Requests from GET /requests
+      const fetchRequests = useCallback(async () => {
+        try {
+          const res = await fetch("/requests");
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) setRequests(data);
+          }
+        } catch (e) {
+          console.warn("Poll fetch error:", e);
+        }
+      }, []);
 
-    function dismissToast() {
-      document.getElementById("toast-message").classList.add("hidden");
-    }
+      useEffect(() => {
+        fetchRequests();
+        const timer = setInterval(fetchRequests, 5000);
+        return () => clearInterval(timer);
+      }, [fetchRequests]);
 
-    // Fetch all requests via GET /requests
-    async function fetchRequests() {
-      try {
-        const data = await KabadiApp.apiGet("/requests");
-        allRequests = Array.isArray(data) ? data : [];
-        renderRequests(allRequests);
-      } catch (err) {
-        console.warn("Poll fetch error:", err);
-      }
-    }
+      // Accept Pickup
+      const handleAccept = async (requestId) => {
+        if (!collectorName.trim()) {
+          alert(t.req_collector_name);
+          return;
+        }
 
-    function renderRequests(requests) {
-      const openContainer = document.getElementById("open-requests-container");
-      const acceptedContainer = document.getElementById("accepted-requests-container");
-      const noOpenView = document.getElementById("no-open-view");
-      const noAcceptedView = document.getElementById("no-accepted-view");
+        setAcceptingId(requestId);
+        try {
+          const res = await fetch(`/requests/${requestId}/accept`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ collector_name: collectorName.trim() })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message_hi || data.message_en || data.error);
 
-      const openList = requests.filter(r => r.status !== "accepted");
-      const acceptedList = requests.filter(r => r.status === "accepted");
+          setToastMsg(t.toast_success);
+          setTimeout(() => setToastMsg(null), 4000);
+          await fetchRequests();
+        } catch (err) {
+          alert(err.message);
+        } finally {
+          setAcceptingId(null);
+        }
+      };
 
-      // Update counters
-      document.getElementById("stat-open-count").textContent = openList.length;
-      document.getElementById("stat-accepted-count").textContent = acceptedList.length;
+      // Open Rate Card Modal
+      const openRates = async () => {
+        setShowRateModal(true);
+        try {
+          const res = await fetch(`/rates?lang=${lang}`);
+          const data = await res.json();
+          if (data && data.rates) setRateCardList(data.rates);
+        } catch (e) {
+          console.error(e);
+        }
+      };
 
-      // Render Open Requests
-      if (openList.length === 0) {
-        openContainer.innerHTML = "";
-        noOpenView.classList.remove("hidden");
-      } else {
-        noOpenView.classList.add("hidden");
-        openContainer.innerHTML = openList.map(req => createOpenRequestCard(req)).join("");
-      }
+      // Filtered lists
+      const openList = useMemo(() => {
+        return requests.filter((r) => r.status !== "accepted");
+      }, [requests]);
 
-      // Render Accepted Requests
-      if (acceptedList.length === 0) {
-        acceptedContainer.innerHTML = "";
-        noAcceptedView.classList.remove("hidden");
-      } else {
-        noAcceptedView.classList.add("hidden");
-        acceptedContainer.innerHTML = acceptedList.map(req => createAcceptedRequestCard(req)).join("");
-      }
-    }
+      const acceptedList = useMemo(() => {
+        return requests.filter((r) => r.status === "accepted");
+      }, [requests]);
 
-    function createOpenRequestCard(req) {
-      const isSample = req.is_sample ?? false;
-      const sampleBadge = isSample 
-        ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amberBrand-100 text-amberBrand-800 border border-amberBrand-300">
-             📊 ${KabadiApp.t('badge_sample')}
-           </span>`
-        : "";
+      const displayList = useMemo(() => {
+        let base = activeTab === "open" ? openList : acceptedList;
 
-      const itemsList = Array.isArray(req.items) 
-        ? req.items.map(item => {
-            const name = item.material || item.name || "Item";
-            const qty = item.quantity || (item.weight_kg ? `${item.weight_kg} kg` : "");
-            return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                      ${escapeHtml(name)} ${qty ? `(${escapeHtml(qty)})` : ''}
-                    </span>`;
-          }).join(" ")
-        : "";
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          base = base.filter((r) =>
+            (r.locality && r.locality.toLowerCase().includes(q)) ||
+            (r.name && r.name.toLowerCase().includes(q))
+          );
+        }
 
-      const totalMin = req.total_min ?? 0;
-      const totalMax = req.total_max ?? 0;
+        if (filterCategory === "high_value") {
+          base = base.filter((r) => (r.total_min || 0) >= 300);
+        } else if (filterCategory === "sample") {
+          base = base.filter((r) => r.is_sample);
+        }
 
-      return `
-        <div class="bg-white rounded-2xl border-2 border-slate-200 hover:border-brand-500 shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between space-y-4">
-          <div>
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-1.5">
-                <span>📍</span> ${escapeHtml(req.locality || "Locality")}
-              </h3>
-              ${sampleBadge}
+        return base;
+      }, [activeTab, openList, acceptedList, searchQuery, filterCategory]);
+
+      return (
+        <div className="min-h-full flex flex-col">
+          {/* Header */}
+          <header className="sticky top-0 z-30 bg-slate-900 border-b border-slate-800 text-white shadow-md">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+              <a href="/kabadi" className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-md">
+                  🚛
+                </div>
+                <div>
+                  <h1 className="font-extrabold text-lg sm:text-xl text-white leading-tight flex items-center gap-2">
+                    {t.brand_title}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      LIVE
+                    </span>
+                  </h1>
+                  <p className="text-xs text-slate-400 hidden sm:block">{t.brand_tagline}</p>
+                </div>
+              </a>
+
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  type="button"
+                  onClick={openRates}
+                  className="touch-target inline-flex items-center px-3 py-2 text-xs sm:text-sm font-bold text-emerald-300 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition"
+                >
+                  {t.nav_rates}
+                </button>
+
+                <a
+                  href="/household"
+                  className="touch-target inline-flex items-center px-3 py-2 text-xs sm:text-sm font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition"
+                >
+                  🏠 <span className="ml-1 hidden sm:inline">{t.nav_household}</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={toggleLang}
+                  className="touch-target inline-flex items-center px-3.5 py-2 text-xs sm:text-sm font-extrabold text-slate-100 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition shadow-sm"
+                >
+                  🌐 {t.toggle_lang}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Container */}
+          <main className="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            {/* Identity & Stats Bar */}
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex-grow max-w-md">
+                <label className="block text-sm font-extrabold text-slate-800 mb-1 flex items-center gap-1.5">
+                  <span>👤</span> {t.collector_name_label}
+                </label>
+                <input
+                  type="text"
+                  value={collectorName}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="उदा. रमेश कुमार / सुरेश कबाड़ी"
+                  className="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-900 font-bold placeholder-slate-400 transition"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 sm:self-end">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center">
+                  <span className="block text-xs font-semibold text-slate-500 uppercase">{t.stat_open}</span>
+                  <span className="text-xl font-extrabold text-emerald-600">{openList.length}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-center">
+                  <span className="block text-xs font-semibold text-slate-500 uppercase">{t.stat_accepted}</span>
+                  <span className="text-xl font-extrabold text-slate-800">{acceptedList.length}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                  <span>{t.stat_live_sync}</span>
+                </div>
+              </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 mb-3">
-              <span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
-                ⏰ ${escapeHtml(req.slot || "Slot")}
-              </span>
-              <span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
-                👤 ${escapeHtml(req.name || "Customer")}
-              </span>
+            {/* Toast Alert */}
+            {toastMsg && (
+              <div className="bg-emerald-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-between transition-all">
+                <span>{toastMsg}</span>
+                <button onClick={() => setToastMsg(null)} className="text-white hover:text-emerald-200 font-bold ml-4">✕</button>
+              </div>
+            )}
+
+            {/* Navigation Tabs & Search Filter */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("open")}
+                  className={`px-4 py-2.5 rounded-xl font-extrabold text-sm transition ${
+                    activeTab === "open"
+                      ? "bg-brand-600 text-white shadow-sm"
+                      : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-300"
+                  }`}
+                >
+                  📦 {t.tab_open} ({openList.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("accepted")}
+                  className={`px-4 py-2.5 rounded-xl font-extrabold text-sm transition ${
+                    activeTab === "accepted"
+                      ? "bg-slate-900 text-white shadow-sm"
+                      : "bg-white text-slate-700 hover:bg-slate-200 border border-slate-300"
+                  }`}
+                >
+                  ✅ {t.tab_accepted} ({acceptedList.length})
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative max-w-xs w-full">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t.search_placeholder}
+                  className="w-full text-xs sm:text-sm pl-9 pr-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+                <span className="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+              </div>
             </div>
 
-            <!-- Items Pills -->
-            <div class="flex flex-wrap gap-1.5 mb-4">
-              ${itemsList}
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFilterCategory("all")}
+                className={`text-xs px-3 py-1.5 rounded-lg font-bold border transition ${
+                  filterCategory === "all" ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-300"
+                }`}
+              >
+                {t.filter_all}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterCategory("high_value")}
+                className={`text-xs px-3 py-1.5 rounded-lg font-bold border transition ${
+                  filterCategory === "high_value" ? "bg-emerald-700 text-white border-emerald-700" : "bg-white text-slate-600 border-slate-300"
+                }`}
+              >
+                💰 {t.filter_high_value}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterCategory("sample")}
+                className={`text-xs px-3 py-1.5 rounded-lg font-bold border transition ${
+                  filterCategory === "sample" ? "bg-amber-600 text-white border-amber-600" : "bg-white text-slate-600 border-slate-300"
+                }`}
+              >
+                📊 {t.filter_sample}
+              </button>
             </div>
-          </div>
 
-          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-            <div>
-              <span class="block text-[11px] font-bold uppercase text-slate-400">अनुमानित भुगतान</span>
-              <span class="text-xl font-extrabold text-emerald-700">₹${totalMin} - ₹${totalMax}</span>
+            {/* Requests Grid */}
+            {displayList.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center space-y-3">
+                <div className="text-4xl">📭</div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-700">
+                  {activeTab === "open" ? t.no_open : t.no_accepted}
+                </h3>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {displayList.map((req) => {
+                  const isAccepted = req.status === "accepted";
+                  return (
+                    <div
+                      key={req.id}
+                      className={`rounded-2xl border-2 p-5 flex flex-col justify-between space-y-4 shadow-sm transition hover:shadow-md ${
+                        isAccepted ? "bg-emerald-50/40 border-emerald-300" : "bg-white border-slate-200 hover:border-brand-500"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-1.5">
+                            <span>📍</span> {req.locality}
+                          </h3>
+                          {req.is_sample && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amberBrand-100 text-amberBrand-800 border border-amberBrand-300">
+                              📊 {t.badge_sample}
+                            </span>
+                          )}
+                          {isAccepted && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              ✓ {t.badge_accepted}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 mb-3">
+                          <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
+                            ⏰ {req.slot}
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
+                            👤 {req.name}
+                          </span>
+                        </div>
+
+                        {/* Items Breakdown Pills */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {(req.items || []).map((it, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200"
+                            >
+                              {it.material || it.name} ({it.quantity || "1 kg"})
+                            </span>
+                          ))}
+                        </div>
+
+                        {isAccepted && (
+                          <div className="text-xs font-bold text-emerald-800 bg-white p-2 rounded-lg border border-emerald-200">
+                            🛵 साथी: {req.collector_name || collectorName}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                        <div>
+                          <span className="block text-[11px] font-bold uppercase text-slate-400">अनुमानित भुगतान</span>
+                          <span className="text-xl font-extrabold text-emerald-700">
+                            ₹{req.total_min} - ₹{req.total_max}
+                          </span>
+                        </div>
+
+                        {!isAccepted && (
+                          <button
+                            type="button"
+                            onClick={() => handleAccept(req.id)}
+                            disabled={acceptingId === req.id}
+                            className="touch-target px-5 py-3 rounded-xl font-extrabold text-sm sm:text-base text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800 shadow transition flex items-center justify-center disabled:opacity-50"
+                          >
+                            {acceptingId === req.id ? t.btn_accepting : t.btn_accept}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </main>
+
+          {/* Modal: Live Scrap Rate Card */}
+          {showRateModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between border-b pb-3">
+                  <h3 className="font-extrabold text-lg text-slate-900">{t.rate_modal_title}</h3>
+                  <button onClick={() => setShowRateModal(false)} className="text-slate-400 hover:text-slate-700 text-xl font-bold">✕</button>
+                </div>
+
+                <div className="divide-y divide-slate-100">
+                  {rateCardList.map((r, i) => (
+                    <div key={i} className="py-2.5 flex items-center justify-between">
+                      <span className="font-semibold text-slate-800">{r.name}</span>
+                      <span className="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs border border-emerald-200">
+                        {r.rate_display}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setShowRateModal(false)}
+                  className="w-full py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition"
+                >
+                  {t.close}
+                </button>
+              </div>
             </div>
+          )}
 
-            <!-- Accept CTA Button (Min 48px Height) -->
-            <button onclick="handleAcceptRequest('${req.id}')" type="button" id="btn-accept-${req.id}"
-              class="touch-target px-5 py-3 rounded-xl font-extrabold text-sm sm:text-base text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800 shadow transition flex items-center justify-center">
-              <span>${KabadiApp.t('btn_accept')}</span>
-            </button>
-          </div>
+          {/* Footer */}
+          <footer className="mt-auto border-t border-slate-200 bg-white py-6">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+              <span>© 2026 कबाड़ी कनेक्ट (Kabadi Connect) • AWS Hackathon — Waste & Energy Track</span>
+              <div className="flex items-center gap-4">
+                <a href="/household" className="font-semibold text-slate-700">घर के लिए</a>
+                <a href="/kabadi" className="font-semibold text-slate-700">कबाड़ीवाला पोर्टल</a>
+              </div>
+            </div>
+          </footer>
         </div>
-      `;
+      );
     }
 
-    function createAcceptedRequestCard(req) {
-      const itemsList = Array.isArray(req.items) 
-        ? req.items.map(item => {
-            const name = item.material || item.name || "Item";
-            const qty = item.quantity || (item.weight_kg ? `${item.weight_kg} kg` : "");
-            return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      ${escapeHtml(name)} ${qty ? `(${escapeHtml(qty)})` : ''}
-                    </span>`;
-          }).join(" ")
-        : "";
-
-      const collector = req.collector_name || "आप (You)";
-      const totalMin = req.total_min ?? 0;
-      const totalMax = req.total_max ?? 0;
-
-      return `
-        <div class="bg-emerald-50/50 rounded-2xl border-2 border-emerald-300 p-5 flex flex-col justify-between space-y-4 shadow-sm">
-          <div>
-            <div class="flex items-start justify-between gap-2 mb-2">
-              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-1.5">
-                <span>📍</span> ${escapeHtml(req.locality || "Locality")}
-              </h3>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                ✓ ${KabadiApp.t('btn_accepted_badge')}
-              </span>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600 mb-3">
-              <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-emerald-200 text-slate-800">
-                ⏰ ${escapeHtml(req.slot || "Slot")}
-              </span>
-              <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-emerald-200 text-slate-800">
-                👤 ${escapeHtml(req.name || "Customer")}
-              </span>
-            </div>
-
-            <div class="flex flex-wrap gap-1.5 mb-3">
-              ${itemsList}
-            </div>
-
-            <div class="text-xs font-bold text-emerald-800 bg-white p-2.5 rounded-xl border border-emerald-200 flex items-center gap-2">
-              <span>🛵 साथी:</span> <span>${escapeHtml(collector)}</span>
-            </div>
-          </div>
-
-          <div class="pt-3 border-t border-emerald-200/60 flex items-center justify-between">
-            <div>
-              <span class="block text-[11px] font-bold uppercase text-slate-500">तय मूल्य</span>
-              <span class="text-xl font-extrabold text-emerald-700">₹${totalMin} - ₹${totalMax}</span>
-            </div>
-            <span class="text-xs font-bold text-emerald-700">पिकअप की तैयारी करें</span>
-          </div>
-        </div>
-      `;
-    }
-
-    // Accept a Request via POST /requests/{id}/accept
-    async function handleAcceptRequest(requestId) {
-      const collectorInput = document.getElementById("collector-name-input");
-      const collectorName = collectorInput.value.trim();
-
-      if (!collectorName) {
-        alert(KabadiApp.t("collector_name_required"));
-        collectorInput.focus();
-        return;
-      }
-
-      const btn = document.getElementById(`btn-accept-${requestId}`);
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = `<span>${KabadiApp.t('btn_accepting')}</span>`;
-      }
-
-      try {
-        await KabadiApp.apiPost(`/requests/${requestId}/accept`, {
-          collector_name: collectorName
-        });
-
-        showToast(KabadiApp.t("toast_accepted_success"));
-        // Immediate refresh
-        await fetchRequests();
-      } catch (err) {
-        console.error(err);
-        alert(err.message);
-      }
-    }
-
-    function escapeHtml(str) {
-      if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
