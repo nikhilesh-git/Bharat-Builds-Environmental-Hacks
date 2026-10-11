@@ -1,72 +1,46 @@
 """
-Kabadi Connect — Material Scrap Rate Card (Approximate INR / kg or piece)
-Note: All scrap prices fluctuate dynamically with local mandi / scrap yard rates.
-These rates are representative approximate estimates.
+backend/rates.py
+Approximate scrap material rates in INR per kg for Indian kabadi market.
+All values are approximate and may vary by city, season, and vendor.
 """
 
-# Approximate market scrap rates in INR
-SCRAP_RATES = {
-    "newspaper": {
-        "canonical_name": "अखबार (Newspaper)",
-        "min_rate": 12,
-        "max_rate": 15,
-        "unit": "kg",
-        "keywords": ["newspaper", "अखबार", "akhbaar", "paper", "raddi", "रद्दी"]
-    },
-    "cardboard": {
-        "canonical_name": "गत्ता (Cardboard)",
-        "min_rate": 8,
-        "max_rate": 10,
-        "unit": "kg",
-        "keywords": ["cardboard", "गत्ता", "gatta", "carton", "कार्टन", "box", "boxes"]
-    },
-    "mixed_paper": {
-        "canonical_name": "किताबें / मिश्रित कागज (Books & Mixed Paper)",
-        "min_rate": 8,
-        "max_rate": 12,
-        "unit": "kg",
-        "keywords": ["book", "books", "किताब", "किताबें", "copies", "copy", "mixed paper", "कागज"]
-    },
-    "pet_bottles": {
-        "canonical_name": "PET प्लास्टिक बोतलें (PET Bottles)",
-        "min_rate": 15,
-        "max_rate": 20,
-        "unit": "kg",
-        "keywords": ["pet", "plastic bottle", "bottles", "बोतल", "बोतलें", "water bottle"]
-    },
-    "hard_plastic": {
-        "canonical_name": "कठोर प्लास्टिक (Hard Plastic)",
-        "min_rate": 12,
-        "max_rate": 18,
-        "unit": "kg",
-        "keywords": ["plastic", "प्लास्टिक", "bucket", "बाल्टी", "tub", "टब", "प्लास्टिक कुर्सी", "plastic chair"]
-    },
-    "iron": {
-        "canonical_name": "लोहा (Iron / Steel)",
-        "min_rate": 26,
-        "max_rate": 30,
-        "unit": "kg",
-        "keywords": ["iron", "लोहा", "लोहे", "loha", "steel", "स्टील", "cooler", "कूलर", "grill", "जाली", "rod", "पाइप", "कुर्सी", "chair", "अलमारी", "लोहे की कुर्सी"]
-    },
-    "aluminium": {
-        "canonical_name": "एल्युमिनियम (Aluminium)",
-        "min_rate": 100,
-        "max_rate": 125,
-        "unit": "kg",
-        "keywords": ["aluminium", "aluminum", "एल्युमिनियम", "utensil", "बर्तन"]
-    },
-    "copper": {
-        "canonical_name": "तांबा (Copper)",
-        "min_rate": 450,
-        "max_rate": 520,
-        "unit": "kg",
-        "keywords": ["copper", "तांबा", "tamba", "wire", "तार", "cable"]
-    },
-    "e_waste": {
-        "canonical_name": "ई-कचरा / इलेक्ट्रॉनिक्स (E-Waste)",
-        "min_rate": 20,
-        "max_rate": 45,
-        "unit": "kg",
-        "keywords": ["e-waste", "ewaste", "ई-कचरा", "fan", "पंखा", "motor", "मोटर", "wire", "tv", "टीवी", "electronics"]
-    }
+# Each entry: (min_inr_per_kg, max_inr_per_kg)
+RATES: dict[str, tuple[float, float]] = {
+    "newspaper":    (14.0, 18.0),   # approx INR 14-18 / kg
+    "cardboard":    (6.0,  10.0),   # approx INR 6-10 / kg
+    "mixed_paper":  (4.0,  8.0),    # approx INR 4-8 / kg
+    "pet":          (8.0,  14.0),   # PET bottles; approx INR 8-14 / kg
+    "hard_plastic": (5.0,  10.0),   # hard/rigid plastic; approx INR 5-10 / kg
+    "iron":         (28.0, 35.0),   # iron / mild steel; approx INR 28-35 / kg
+    "aluminium":    (90.0, 110.0),  # aluminium; approx INR 90-110 / kg
+    "copper":       (420.0, 480.0), # copper; approx INR 420-480 / kg
+    "e_waste":      (15.0, 40.0),   # mixed e-waste; approx INR 15-40 / kg
+}
+
+# Human-readable display names
+MATERIAL_NAMES: dict[str, dict[str, str]] = {
+    "newspaper":    {"en": "Newspaper",     "hi": "अखबार"},
+    "cardboard":    {"en": "Cardboard",     "hi": "गत्ता"},
+    "mixed_paper":  {"en": "Mixed Paper",   "hi": "मिश्रित कागज"},
+    "pet":          {"en": "PET Plastic",   "hi": "पीईटी प्लास्टिक"},
+    "hard_plastic": {"en": "Hard Plastic",  "hi": "हार्ड प्लास्टिक"},
+    "iron":         {"en": "Iron / Steel",  "hi": "लोहा / स्टील"},
+    "aluminium":    {"en": "Aluminium",     "hi": "एल्युमिनियम"},
+    "copper":       {"en": "Copper",        "hi": "तांबा"},
+    "e_waste":      {"en": "E-Waste",       "hi": "ई-कचरा"},
+}
+
+# Keywords / aliases that map to canonical material keys
+KEYWORDS: dict[str, list[str]] = {
+    "newspaper":    ["newspaper", "news paper", "akhbar", "अखबार", "raddi", "रद्दी", "paper"],
+    "cardboard":    ["cardboard", "card board", "gatta", "गत्ता", "carton", "box", "boxes"],
+    "mixed_paper":  ["mixed paper", "paper", "copy", "notebook", "books", "किताब", "किताबें", "कागज"],
+    "pet":          ["pet", "plastic bottle", "bottle", "bottles", "water bottle", "बोतल", "बोतलें"],
+    "hard_plastic": ["plastic", "hard plastic", "प्लास्टिक", "bucket", "बाल्टी", "tub", "टब", "chair", "container"],
+    "iron":         ["iron", "steel", "rod", "loha", "लोहा", "लोहे", "scrap metal", "metal", "cooler", "कूलर", "कुर्सी", "chair", "अलमारी", "grill", "जाली"],
+    "aluminium":    ["aluminium", "aluminum", "एल्युमिनियम", "can", "cans", "foil", "utensil", "बर्तन"],
+    "copper":       ["copper", "wire", "tambe", "तांबा", "तार"],
+    "e_waste":      ["ewaste", "e-waste", "e waste", "ई-कचरा", "electronic", "fan", "पंखा", "laptop",
+                     "computer", "mobile", "phone", "tv", "television", "motor",
+                     "monitor", "printer", "keyboard"],
 }

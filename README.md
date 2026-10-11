@@ -113,7 +113,7 @@ cd Bharat-Builds-Environmental-Hacks
 
 ### 2. Install dependencies
 ```bash
-pip install -r backend/requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3. Environment configuration
@@ -135,4 +135,4 @@ python3 -m uvicorn backend.main:app --host 127.0.0.1 --port 8080 --ws none
 
 ## 🎬 3-Minute Demo Video Guide
 
-Check [`DEMO_SCRIPT.md`](file:///home/ganesh/Desktop/aws/DEMO_SCRIPT.md) for the timed script and the 10-input test matrix covering Hindi, English, code-switched Hinglish, and edge cases.
+Check [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md) for the timed script and the 10-input test matrix covering Hindi, English, code-switched Hinglish, and edge cases.

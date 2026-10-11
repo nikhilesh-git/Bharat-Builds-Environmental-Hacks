@@ -1,21 +1,39 @@
-# Environment variables and secrets
+# Environment variables & secrets
 .env
+.env.*
+!.env.example
 credentials.json
 token.json
 
-# SQLite database
+# SQLite databases
 *.db
+*.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
 
-# Python cache & virtual environment
+# Python cache & virtualenvs
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 venv/
+ENV/
 .venv/
 build/
 dist/
 *.egg-info/
 
-# Logs & temp files
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
 *.log
 scratch/
