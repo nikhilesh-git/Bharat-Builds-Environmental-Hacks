@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="hi" class="h-full bg-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>कबाड़ी कनेक्ट (Kabadi Connect) — कबाड़ीवाला साथी पोर्टल</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            amberBrand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom Styles & Fonts -->
+  <link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body class="min-h-full flex flex-col text-slate-800 font-devanagari antialiased bg-slate-100 selection:bg-brand-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-slate-900 border-b border-slate-800 text-white shadow-md">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/kabadi" class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-md">
+            🚛
+          </div>
+          <div>
+            <h1 class="font-extrabold text-lg sm:text-xl text-white tracking-tight leading-tight flex items-center gap-2">
+              <span data-i18n="brand_title">कबाड़ी कनेक्ट</span>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">साथी पोर्टल</span>
+            </h1>
+            <p class="text-xs text-slate-400 hidden sm:block" data-i18n="kabadi_hero_subtitle">अपने इलाके में घरों से सीधे कबाड़ पिकअप स्वीकार करें।</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Household Link -->
+        <a href="/household" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700">
+          🏠 <span class="ml-1.5" data-i18n="nav_household">घर के लिए</span>
+        </a>
+
+        <!-- Language Toggle -->
+        <button id="lang-toggle-btn" onclick="KabadiApp.toggleLang()" type="button" class="touch-target inline-flex items-center justify-center px-3.5 py-2 text-sm font-bold text-slate-100 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 rounded-lg border border-slate-700 transition shadow-sm">
+          🌐 <span>English में देखें</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+    <!-- Collector Identity & Sync Bar (High Contrast) -->
+    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex-grow max-w-md">
+        <label for="collector-name-input" class="block text-sm font-extrabold text-slate-800 mb-1 flex items-center gap-1.5" data-i18n="label_collector_name">
+          <span>👤</span> आपका नाम दर्ज करें (Collector Name):
+        </label>
+        <div class="relative">
+          <input type="text" id="collector-name-input"
+            class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-900 font-bold placeholder-slate-400 transition"
+            data-i18n-placeholder="collector_name_placeholder"
+            placeholder="उदा. रमेश कुमार / सुरेश कबाड़ी"
+            value="रमेश कुमार">
+        </div>
+      </div>
+
+      <!-- Sync Status & Stats -->
+      <div class="flex items-center gap-4 sm:self-end">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-center">
+          <span class="block text-xs font-semibold text-slate-500 uppercase">उपलब्ध</span>
+          <span id="stat-open-count" class="text-xl font-extrabold text-emerald-600">0</span>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-center">
+          <span class="block text-xs font-semibold text-slate-500 uppercase">स्वीकृत</span>
+          <span id="stat-accepted-count" class="text-xl font-extrabold text-slate-800">0</span>
+        </div>
+        <div class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+          <span data-i18n="auto_refresh_badge">🔴 लाइव अपडेट (5s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert / Toast Banner -->
+    <div id="toast-message" class="hidden bg-emerald-600 text-white px-5 py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-between transition-all">
+      <span id="toast-text">पिकअप सफलतापूर्वक स्वीकार कर लिया गया!</span>
+      <button onclick="dismissToast()" class="text-white hover:text-emerald-200 text-sm font-bold ml-4">✕</button>
+    </div>
+
+    <!-- SECTION 1: Open Pickup Requests -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+          <span>📦</span> <span data-i18n="tab_open_requests">उपलब्ध अनुरोध (Open Requests)</span>
+        </h2>
+        <button onclick="fetchRequests()" type="button" class="text-sm font-bold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg border border-brand-200 transition">
+          🔄 रिफ्रेश करें
+        </button>
+      </div>
+
+      <!-- Loading Skeleton (Initial Load) -->
+      <div id="open-requests-skeleton" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+          <div class="h-6 skeleton-shimmer rounded w-2/3"></div>
+          <div class="h-4 skeleton-shimmer rounded w-1/2"></div>
+          <div class="h-12 skeleton-shimmer rounded"></div>
+          <div class="h-10 skeleton-shimmer rounded"></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-3">
+          <div class="h-6 skeleton-shimmer rounded w-2/3"></div>
+          <div class="h-4 skeleton-shimmer rounded w-1/2"></div>
+          <div class="h-12 skeleton-shimmer rounded"></div>
+          <div class="h-10 skeleton-shimmer rounded"></div>
+        </div>
+      </div>
+
+      <!-- Open Requests Grid Container -->
+      <div id="open-requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Empty State for Open Requests -->
+      <div id="no-open-view" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
+        <div class="text-4xl">📭</div>
+        <h3 class="text-lg font-bold text-slate-800" data-i18n="no_open_requests">
+          वर्तमान में कोई नया खुला अनुरोध उपलब्ध नहीं है। 5 सेकंड में ऑटो-रिफ्रेश हो रहा है...
+        </h3>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Accepted Requests List -->
+    <section class="space-y-4 pt-6 border-t border-slate-200">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+          <span>✅</span> <span data-i18n="tab_accepted_requests">मेरे स्वीकृत अनुरोध (Accepted)</span>
+        </h2>
+      </div>
+
+      <!-- Accepted Requests Container -->
+      <div id="accepted-requests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Empty State for Accepted Requests -->
+      <div id="no-accepted-view" class="hidden bg-white rounded-2xl p-8 border border-slate-200 text-center space-y-3">
+        <div class="text-4xl">📝</div>
+        <h3 class="text-lg font-bold text-slate-600" data-i18n="no_accepted_requests">
+          आपने अभी तक कोई अनुरोध स्वीकार नहीं किया है।
+        </h3>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-200 bg-white py-6">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+      <div class="flex items-center gap-2">
+        <span>© 2026 कबाड़ी कनेक्ट (Kabadi Connect)</span>
+        <span>•</span>
+        <span>AWS Hackathon — Waste & Energy Track</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="/household" class="hover:text-slate-800 font-semibold" data-i18n="nav_household">घर के लिए</a>
+        <a href="/kabadi" class="hover:text-slate-800 font-semibold" data-i18n="nav_kabadi">कबाड़ीवाला पोर्टल</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Page Script -->
+  <script src="/frontend/app.js"></script>
+  <script>
+    let pollInterval = null;
+    let allRequests = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      KabadiApp.updateStaticTranslations();
+
+      // Restore collector name from localStorage if available
+      const savedName = localStorage.getItem("kabadi_collector_name");
+      if (savedName) {
+        document.getElementById("collector-name-input").value = savedName;
+      }
+
+      document.getElementById("collector-name-input").addEventListener("input", (e) => {
+        localStorage.setItem("kabadi_collector_name", e.target.value.trim());
+      });
+
+      // Initial fetch
+      fetchRequests();
+
+      // Start 5s polling
+      pollInterval = setInterval(fetchRequests, 5000);
+    });
+
+    window.addEventListener("langchange", () => {
+      renderRequests(allRequests);
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast-message");
+      const text = document.getElementById("toast-text");
+      text.textContent = msg;
+      toast.classList.remove("hidden");
+      setTimeout(() => dismissToast(), 4000);
+    }
+
+    function dismissToast() {
+      document.getElementById("toast-message").classList.add("hidden");
+    }
+
+    // Fetch all requests via GET /requests
+    async function fetchRequests() {
+      try {
+        const data = await KabadiApp.apiGet("/requests");
+        allRequests = Array.isArray(data) ? data : [];
+        renderRequests(allRequests);
+      } catch (err) {
+        console.warn("Poll fetch error:", err);
+      }
+    }
+
+    function renderRequests(requests) {
+      const openContainer = document.getElementById("open-requests-container");
+      const acceptedContainer = document.getElementById("accepted-requests-container");
+      const noOpenView = document.getElementById("no-open-view");
+      const noAcceptedView = document.getElementById("no-accepted-view");
+
+      const openList = requests.filter(r => r.status !== "accepted");
+      const acceptedList = requests.filter(r => r.status === "accepted");
+
+      // Update counters
+      document.getElementById("stat-open-count").textContent = openList.length;
+      document.getElementById("stat-accepted-count").textContent = acceptedList.length;
+
+      // Render Open Requests
+      if (openList.length === 0) {
+        openContainer.innerHTML = "";
+        noOpenView.classList.remove("hidden");
+      } else {
+        noOpenView.classList.add("hidden");
+        openContainer.innerHTML = openList.map(req => createOpenRequestCard(req)).join("");
+      }
+
+      // Render Accepted Requests
+      if (acceptedList.length === 0) {
+        acceptedContainer.innerHTML = "";
+        noAcceptedView.classList.remove("hidden");
+      } else {
+        noAcceptedView.classList.add("hidden");
+        acceptedContainer.innerHTML = acceptedList.map(req => createAcceptedRequestCard(req)).join("");
+      }
+    }
+
+    function createOpenRequestCard(req) {
+      const isSample = req.is_sample ?? false;
+      const sampleBadge = isSample 
+        ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amberBrand-100 text-amberBrand-800 border border-amberBrand-300">
+             📊 ${KabadiApp.t('badge_sample')}
+           </span>`
+        : "";
+
+      const itemsList = Array.isArray(req.items) 
+        ? req.items.map(item => {
+            const name = item.material || item.name || "Item";
+            const qty = item.quantity || (item.weight_kg ? `${item.weight_kg} kg` : "");
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                      ${escapeHtml(name)} ${qty ? `(${escapeHtml(qty)})` : ''}
+                    </span>`;
+          }).join(" ")
+        : "";
+
+      const totalMin = req.total_min ?? 0;
+      const totalMax = req.total_max ?? 0;
+
+      return `
+        <div class="bg-white rounded-2xl border-2 border-slate-200 hover:border-brand-500 shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between space-y-4">
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-1.5">
+                <span>📍</span> ${escapeHtml(req.locality || "Locality")}
+              </h3>
+              ${sampleBadge}
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500 mb-3">
+              <span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
+                ⏰ ${escapeHtml(req.slot || "Slot")}
+              </span>
+              <span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-md text-slate-700">
+                👤 ${escapeHtml(req.name || "Customer")}
+              </span>
+            </div>
+
+            <!-- Items Pills -->
+            <div class="flex flex-wrap gap-1.5 mb-4">
+              ${itemsList}
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+            <div>
+              <span class="block text-[11px] font-bold uppercase text-slate-400">अनुमानित भुगतान</span>
+              <span class="text-xl font-extrabold text-emerald-700">₹${totalMin} - ₹${totalMax}</span>
+            </div>
+
+            <!-- Accept CTA Button (Min 48px Height) -->
+            <button onclick="handleAcceptRequest('${req.id}')" type="button" id="btn-accept-${req.id}"
+              class="touch-target px-5 py-3 rounded-xl font-extrabold text-sm sm:text-base text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800 shadow transition flex items-center justify-center">
+              <span>${KabadiApp.t('btn_accept')}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function createAcceptedRequestCard(req) {
+      const itemsList = Array.isArray(req.items) 
+        ? req.items.map(item => {
+            const name = item.material || item.name || "Item";
+            const qty = item.quantity || (item.weight_kg ? `${item.weight_kg} kg` : "");
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      ${escapeHtml(name)} ${qty ? `(${escapeHtml(qty)})` : ''}
+                    </span>`;
+          }).join(" ")
+        : "";
+
+      const collector = req.collector_name || "आप (You)";
+      const totalMin = req.total_min ?? 0;
+      const totalMax = req.total_max ?? 0;
+
+      return `
+        <div class="bg-emerald-50/50 rounded-2xl border-2 border-emerald-300 p-5 flex flex-col justify-between space-y-4 shadow-sm">
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-1.5">
+                <span>📍</span> ${escapeHtml(req.locality || "Locality")}
+              </h3>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ✓ ${KabadiApp.t('btn_accepted_badge')}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600 mb-3">
+              <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-emerald-200 text-slate-800">
+                ⏰ ${escapeHtml(req.slot || "Slot")}
+              </span>
+              <span class="inline-flex items-center gap-1 bg-white px-2 py-1 rounded-md border border-emerald-200 text-slate-800">
+                👤 ${escapeHtml(req.name || "Customer")}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 mb-3">
+              ${itemsList}
+            </div>
+
+            <div class="text-xs font-bold text-emerald-800 bg-white p-2.5 rounded-xl border border-emerald-200 flex items-center gap-2">
+              <span>🛵 साथी:</span> <span>${escapeHtml(collector)}</span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-emerald-200/60 flex items-center justify-between">
+            <div>
+              <span class="block text-[11px] font-bold uppercase text-slate-500">तय मूल्य</span>
+              <span class="text-xl font-extrabold text-emerald-700">₹${totalMin} - ₹${totalMax}</span>
+            </div>
+            <span class="text-xs font-bold text-emerald-700">पिकअप की तैयारी करें</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Accept a Request via POST /requests/{id}/accept
+    async function handleAcceptRequest(requestId) {
+      const collectorInput = document.getElementById("collector-name-input");
+      const collectorName = collectorInput.value.trim();
+
+      if (!collectorName) {
+        alert(KabadiApp.t("collector_name_required"));
+        collectorInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById(`btn-accept-${requestId}`);
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>${KabadiApp.t('btn_accepting')}</span>`;
+      }
+
+      try {
+        await KabadiApp.apiPost(`/requests/${requestId}/accept`, {
+          collector_name: collectorName
+        });
+
+        showToast(KabadiApp.t("toast_accepted_success"));
+        // Immediate refresh
+        await fetchRequests();
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

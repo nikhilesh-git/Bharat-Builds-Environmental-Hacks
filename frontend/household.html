@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="hi" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>कबाड़ी कनेक्ट (Kabadi Connect) — घर का कबाड़ बेचें</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b'
+            },
+            amberBrand: {
+              50: '#fffbeb',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Custom Styles & Fonts -->
+  <link rel="stylesheet" href="/frontend/style.css">
+</head>
+<body class="min-h-full flex flex-col text-slate-800 font-devanagari antialiased bg-slate-50 selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/household" class="flex items-center gap-2 group">
+          <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white text-xl shadow-md group-hover:bg-brand-700 transition">
+            ♻️
+          </div>
+          <div>
+            <h1 class="font-extrabold text-xl text-slate-900 tracking-tight leading-tight" data-i18n="brand_title">कबाड़ी कनेक्ट</h1>
+            <p class="text-xs text-slate-500 hidden sm:block" data-i18n="brand_tagline">घर बैठे कबाड़ बेचें • सही दाम और तुरंत पिकअप</p>
+          </div>
+        </a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Collector Portal Link -->
+        <a href="/kabadi" class="hidden sm:inline-flex items-center px-3 py-2 text-sm font-semibold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-lg transition border border-brand-200">
+          🚛 <span class="ml-1.5" data-i18n="nav_kabadi">कबाड़ीवाला पोर्टल</span>
+        </a>
+
+        <!-- Language Toggle Button (Hindi/English) -->
+        <button id="lang-toggle-btn" onclick="KabadiApp.toggleLang()" type="button" class="touch-target inline-flex items-center justify-center px-3.5 py-2 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 rounded-lg border border-slate-300 transition shadow-sm">
+          🌐 <span>English में देखें</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+
+    <!-- Hero Title Card -->
+    <div class="bg-gradient-to-r from-brand-900 via-brand-800 to-emerald-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none text-9xl">📦</div>
+      <div class="relative z-10 max-w-2xl">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 mb-3">
+          ⚡ AI-संचालित सटीक मूल्यांकन (Open-Source Strands Agent)
+        </span>
+        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight" data-i18n="hero_title">
+          घर का कबाड़ बेचें, तुरंत सही दाम जानें
+        </h2>
+        <p class="mt-2 text-sm sm:text-base text-emerald-100/90 leading-relaxed" data-i18n="hero_subtitle">
+          अखबार, गत्ता, लोहा, प्लास्टिक या ई-कचरा — कुछ भी लिखिए या बोलिए। AI तुरंत अनुमानित कीमत बताएगा।
+        </p>
+      </div>
+    </div>
+
+    <!-- Global Error Banner -->
+    <div id="error-banner" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm">
+      <div class="flex items-start">
+        <div class="text-red-500 text-xl font-bold mr-3">⚠️</div>
+        <div class="flex-grow">
+          <h3 class="text-sm font-bold text-red-800" data-i18n="err_title">त्रुटि (Error)</h3>
+          <p id="error-message" class="text-sm text-red-700 mt-1"></p>
+        </div>
+        <button onclick="dismissError()" class="text-red-400 hover:text-red-600 text-sm font-bold ml-2">✕</button>
+      </div>
+    </div>
+
+    <!-- STEP 1: Scrap Input Form -->
+    <section id="step1-section" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-7">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2" data-i18n="step1_heading">
+          <span class="w-7 h-7 rounded-full bg-brand-600 text-white inline-flex items-center justify-center text-sm font-bold">1</span>
+          कबाड़ का विवरण दें
+        </h3>
+        <!-- Live Recording Status Indicator -->
+        <div id="mic-status" class="hidden text-xs font-bold text-red-600 animate-pulse flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600"></span>
+          <span data-i18n="mic_listening">🎙️ सुन रहे हैं... बोलिए</span>
+        </div>
+      </div>
+
+      <div class="relative">
+        <textarea id="scrap-input" rows="4" 
+          class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-4 text-base text-slate-800 placeholder-slate-400 transition resize-y min-h-[120px]"
+          data-i18n-placeholder="input_placeholder"
+          placeholder="उदाहरण: 10 किलो अखबार, 5 किलो गत्ता, एक पुरानी लोहे की कुर्सी, 10 पानी की बोतलें..."></textarea>
+        
+        <!-- Speech to Text Mic Button -->
+        <button id="mic-btn" type="button" 
+          class="touch-target absolute right-3 bottom-3 inline-flex items-center justify-center p-3 rounded-full bg-slate-100 hover:bg-brand-50 text-slate-600 hover:text-brand-700 border border-slate-300 shadow-sm transition active:scale-95"
+          data-i18n-title="mic_btn_title"
+          title="बोलकर दर्ज करें (Speech Input)">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="mt-3.5">
+        <p class="text-xs font-semibold text-slate-500 mb-2" data-i18n="chips_title">त्वरित उदाहरण (क्लिक करें):</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="fillInput('10 किलो अखबार, 5 किलो गत्ता')" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-brand-50 hover:text-brand-800 hover:border-brand-300 border border-slate-200 rounded-lg text-slate-700 transition" data-i18n="chip1">
+            10 किलो अखबार, 5 किलो गत्ता
+          </button>
+          <button type="button" onclick="fillInput('पुराना कूलर, लोहे की जाली, 8 बीयर की बोतलें')" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-brand-50 hover:text-brand-800 hover:border-brand-300 border border-slate-200 rounded-lg text-slate-700 transition" data-i18n="chip2">
+            पुराना कूलर, लोहे की जाली, 8 बीयर की बोतलें
+          </button>
+          <button type="button" onclick="fillInput('15 प्लास्टिक की बोतलें, टूटा पंखा, तांबे का तार')" class="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-brand-50 hover:text-brand-800 hover:border-brand-300 border border-slate-200 rounded-lg text-slate-700 transition" data-i18n="chip3">
+            15 प्लास्टिक की बोतलें, टूटा पंखा, तांबे का तार
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Button (Min 48px Height) -->
+      <div class="mt-6">
+        <button id="estimate-btn" onclick="handleEstimate()" type="button"
+          class="touch-target w-full flex items-center justify-center px-6 py-3.5 rounded-xl font-extrabold text-base sm:text-lg text-white bg-brand-600 hover:bg-brand-700 active:bg-brand-800 shadow-md hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <span id="estimate-btn-text" data-i18n="btn_estimate">कीमत का अनुमान लगाएं</span>
+          <svg id="estimate-spinner" class="hidden animate-spin ml-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- ESTIMATE RESULT: Breakdown Table & Total Value -->
+    <section id="estimate-result-section" class="hidden bg-white rounded-2xl border-2 border-emerald-500 shadow-lg p-5 sm:p-7 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h3 class="text-lg sm:text-xl font-extrabold text-slate-900" data-i18n="estimate_heading">
+            अनुमानित दर और कुल मूल्य
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5" data-i18n="approx_note">
+            * सभी दरें अनुमानित हैं। वास्तविक वजन कबाड़ीवाले के आने पर कांटा (digital scale) से तय होगा।
+          </p>
+        </div>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-brand-100 text-brand-800">
+          ✓ AI मूल्यांकित
+        </span>
+      </div>
+
+      <!-- Items Table (Responsive) -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="w-full text-left text-sm text-slate-700 divide-y divide-slate-200">
+          <thead class="bg-slate-100 text-xs font-bold text-slate-600 uppercase tracking-wider">
+            <tr>
+              <th scope="col" class="px-4 py-3" data-i18n="table_material">सामग्री (Item)</th>
+              <th scope="col" class="px-4 py-3" data-i18n="table_qty">मात्रा (Quantity)</th>
+              <th scope="col" class="px-4 py-3" data-i18n="table_rate">अनुमानित दर (Rate)</th>
+              <th scope="col" class="px-4 py-3 text-right" data-i18n="table_price">अनुमानित मूल्य (Value)</th>
+            </tr>
+          </thead>
+          <tbody id="items-table-body" class="divide-y divide-slate-100 bg-white">
+            <!-- Dynamic rows rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Total Payout Glow Card -->
+      <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-300 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-inner">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-800" data-i18n="total_estimated_label">
+            कुल अनुमानित भुगतान:
+          </span>
+          <p class="text-xs text-emerald-600 mt-0.5">नकद / UPI द्वारा आपके दरवाजे पर भुगतान किया जाएगा</p>
+        </div>
+        <div class="text-3xl sm:text-4xl font-extrabold text-emerald-700 tracking-tight" id="total-price-range">
+          ₹0 - ₹0
+        </div>
+      </div>
+
+      <!-- STEP 2: Booking Form -->
+      <div class="border-t border-slate-200 pt-6">
+        <h4 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2" data-i18n="step2_heading">
+          <span class="w-7 h-7 rounded-full bg-brand-600 text-white inline-flex items-center justify-center text-sm font-bold">2</span>
+          पिकअप का समय और पता चुनें
+        </h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Name Input -->
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1" for="customer-name" data-i18n="label_name">
+              आपका नाम
+            </label>
+            <input type="text" id="customer-name"
+              class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-800 placeholder-slate-400 font-medium"
+              data-i18n-placeholder="name_placeholder"
+              placeholder="उदा. सुनीता शर्मा" value="सुनीता शर्मा">
+          </div>
+
+          <!-- Locality Input -->
+          <div>
+            <label class="block text-sm font-bold text-slate-700 mb-1" for="customer-locality" data-i18n="label_locality">
+              इलाका / पता
+            </label>
+            <input type="text" id="customer-locality"
+              class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-800 placeholder-slate-400 font-medium"
+              data-i18n-placeholder="locality_placeholder"
+              placeholder="उदा. लाजपत नगर IV, मालवीय नगर..." value="लाजपत नगर IV, दिल्ली">
+          </div>
+        </div>
+
+        <!-- Preferred Time Slot -->
+        <div class="mt-4">
+          <label class="block text-sm font-bold text-slate-700 mb-1" for="time-slot" data-i18n="label_slot">
+            पिकअप का समय (Time Slot)
+          </label>
+          <select id="time-slot" class="w-full rounded-xl border-2 border-slate-300 focus:border-brand-600 focus:ring-4 focus:ring-brand-100 p-3 text-slate-800 font-medium bg-white">
+            <option value="आज दोपहर (2:00 PM - 4:00 PM)" data-i18n="slot_today_afternoon">आज दोपहर (2:00 PM - 4:00 PM)</option>
+            <option value="आज शाम (4:00 PM - 6:00 PM)" data-i18n="slot_today_evening">आज शाम (4:00 PM - 6:00 PM)</option>
+            <option value="कल सुबह (10:00 AM - 12:00 PM)" data-i18n="slot_tomorrow_morning" selected>कल सुबह (10:00 AM - 12:00 PM)</option>
+            <option value="कल दोपहर (2:00 PM - 4:00 PM)" data-i18n="slot_tomorrow_afternoon">कल दोपहर (2:00 PM - 4:00 PM)</option>
+          </select>
+        </div>
+
+        <!-- Book Pickup Button (Min 48px Height) -->
+        <div class="mt-6">
+          <button id="book-btn" onclick="handleBookPickup()" type="button"
+            class="touch-target w-full flex items-center justify-center px-6 py-4 rounded-xl font-extrabold text-base sm:text-lg text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 shadow-md hover:shadow-lg transition">
+            <span id="book-btn-text" data-i18n="btn_book_pickup">कबाड़ीवाला बुलाएं (Book Pickup)</span>
+            <svg id="book-spinner" class="hidden animate-spin ml-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 3: Live Request Status Card (Polling GET /requests/{id} every 5s) -->
+    <section id="status-section" class="hidden bg-white rounded-2xl border-2 border-slate-200 shadow-lg p-5 sm:p-7 space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <h3 class="text-lg sm:text-xl font-extrabold text-slate-900" data-i18n="status_card_heading">
+          अनुरोध की स्थिति (Live Status)
+        </h3>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amberBrand-50 text-amberBrand-700 border border-amberBrand-500/20" data-i18n="auto_refresh_badge">
+          🔴 लाइव अपडेट (हर 5 सेकंड)
+        </span>
+      </div>
+
+      <!-- State 1: PENDING (Waiting for a Kabadiwala) -->
+      <div id="status-pending-view" class="bg-amber-50/80 border-2 border-amber-300 rounded-2xl p-6 text-center space-y-4">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-amber-100 text-amber-600 radar-pulse mb-2 text-3xl">
+          ⏳
+        </div>
+        <h4 class="text-xl sm:text-2xl font-extrabold text-amber-900" data-i18n="status_waiting_title">
+          कबाड़ीवाले की प्रतीक्षा में...
+        </h4>
+        <p class="text-sm text-amber-800 max-w-md mx-auto" data-i18n="status_waiting_desc">
+          आपका अनुरोध पास के कबाड़ीवालों को भेज दिया गया है। जैसे ही कोई स्वीकार करेगा, आपको यहाँ दिखेगा।
+        </p>
+      </div>
+
+      <!-- State 2: ACCEPTED (<name> is coming at <slot>) -->
+      <div id="status-accepted-view" class="hidden bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-6 text-center space-y-4 shadow-sm">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mb-2 text-3xl">
+          🎉
+        </div>
+        <h4 class="text-xl sm:text-2xl font-extrabold text-emerald-900" data-i18n="status_accepted_title">
+          कबाड़ीवाला आ रहा है!
+        </h4>
+        <div class="p-4 bg-white rounded-xl border border-emerald-200 max-w-lg mx-auto shadow-sm">
+          <p id="accepted-announcement" class="text-lg font-bold text-emerald-800">
+            <!-- Dynamic announcement e.g. "रमेश कुमार कल सुबह 10:00 AM पर आ रहे हैं" -->
+          </p>
+        </div>
+      </div>
+
+      <!-- Request Metadata Details -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-sm space-y-2.5">
+        <div class="flex justify-between items-center py-1 border-b border-slate-200">
+          <span class="text-slate-500 font-medium" data-i18n="status_req_id">अनुरोध संख्या (ID):</span>
+          <span id="meta-req-id" class="font-mono font-bold text-slate-800"></span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200">
+          <span class="text-slate-500 font-medium" data-i18n="status_customer">ग्राहक का नाम:</span>
+          <span id="meta-customer-name" class="font-bold text-slate-800"></span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200">
+          <span class="text-slate-500 font-medium" data-i18n="status_locality">स्थान:</span>
+          <span id="meta-locality" class="font-bold text-slate-800"></span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-slate-200">
+          <span class="text-slate-500 font-medium" data-i18n="status_slot">समय स्लॉट:</span>
+          <span id="meta-slot" class="font-bold text-slate-800"></span>
+        </div>
+        <div class="flex justify-between items-center py-1">
+          <span class="text-slate-500 font-medium" data-i18n="status_total">अनुमानित मूल्य:</span>
+          <span id="meta-total" class="font-extrabold text-emerald-700 text-base"></span>
+        </div>
+      </div>
+
+      <!-- Reset / New Request CTA -->
+      <div class="pt-2">
+        <button onclick="resetHouseholdForm()" type="button"
+          class="touch-target w-full py-3 px-4 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition"
+          data-i18n="btn_new_request">
+          नया अनुरोध बनाएं
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-200 bg-white py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+      <div class="flex items-center gap-2">
+        <span>© 2026 कबाड़ी कनेक्ट (Kabadi Connect)</span>
+        <span>•</span>
+        <span>AWS Hackathon — Waste & Energy Track</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="/household" class="hover:text-slate-800 font-semibold" data-i18n="nav_household">घर के लिए</a>
+        <a href="/kabadi" class="hover:text-slate-800 font-semibold" data-i18n="nav_kabadi">कबाड़ीवाला पोर्टल</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Page Script -->
+  <script src="/frontend/app.js"></script>
+  <script>
+    let currentEstimate = null;
+    let activeRequestId = null;
+    let pollingTimer = null;
+
+    // Initialize UI on load
+    document.addEventListener("DOMContentLoaded", () => {
+      KabadiApp.updateStaticTranslations();
+      KabadiApp.initSpeechRecognition("scrap-input", "mic-btn", "mic-status");
+
+      // Check if there was an active request in localStorage
+      const savedReqId = localStorage.getItem("kabadi_active_req_id");
+      if (savedReqId) {
+        activeRequestId = savedReqId;
+        startPolling(activeRequestId);
+      }
+    });
+
+    window.addEventListener("langchange", () => {
+      if (currentEstimate) {
+        renderEstimateTable(currentEstimate);
+      }
+    });
+
+    function fillInput(text) {
+      document.getElementById("scrap-input").value = text;
+      dismissError();
+    }
+
+    function showError(msg) {
+      const banner = document.getElementById("error-banner");
+      const text = document.getElementById("error-message");
+      text.textContent = msg;
+      banner.classList.remove("hidden");
+      banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function dismissError() {
+      document.getElementById("error-banner").classList.add("hidden");
+    }
+
+    // Step 1: Request Estimate from POST /estimate
+    async function handleEstimate() {
+      dismissError();
+      const text = document.getElementById("scrap-input").value.trim();
+      if (!text) {
+        showError(KabadiApp.getCurrentLang() === "hi" 
+          ? "कृपया कबाड़ का विवरण लिखें या बोलें।" 
+          : "Please describe your scrap items first.");
+        return;
+      }
+
+      const btn = document.getElementById("estimate-btn");
+      const btnText = document.getElementById("estimate-btn-text");
+      const spinner = document.getElementById("estimate-spinner");
+
+      btn.disabled = true;
+      btnText.textContent = KabadiApp.t("btn_estimating");
+      spinner.classList.remove("hidden");
+
+      try {
+        const lang = KabadiApp.getCurrentLang();
+        const data = await KabadiApp.apiPost("/estimate", { text, lang });
+        currentEstimate = data;
+        renderEstimateTable(data);
+        document.getElementById("estimate-result-section").classList.remove("hidden");
+        document.getElementById("estimate-result-section").scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = KabadiApp.t("btn_estimate");
+        spinner.classList.add("hidden");
+      }
+    }
+
+    function renderEstimateTable(data) {
+      const tbody = document.getElementById("items-table-body");
+      tbody.innerHTML = "";
+
+      const items = data.items || [];
+      items.forEach(item => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition";
+
+        const isAssumed = item.assumed ?? item.is_assumed ?? false;
+        const assumedBadge = isAssumed
+          ? `<span class="inline-flex items-center ml-2 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title="${KabadiApp.t('assumed_tooltip')}">${KabadiApp.t('badge_assumed')}</span>`
+          : "";
+
+        const materialName = item.material || item.name || "Item";
+        const quantity = item.quantity || (item.weight_kg ? `${item.weight_kg} kg` : "-");
+        const rate = item.rate_per_kg || (item.rate ? `₹${item.rate}/kg` : "-");
+        
+        const minP = item.min_price ?? item.price_min ?? 0;
+        const maxP = item.max_price ?? item.price_max ?? 0;
+        const priceStr = minP === maxP ? `₹${minP}` : `₹${minP} - ₹${maxP}`;
+
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-semibold text-slate-800 flex items-center">
+            ${escapeHtml(materialName)}
+            ${assumedBadge}
+          </td>
+          <td class="px-4 py-3 font-medium text-slate-600">${escapeHtml(quantity)}</td>
+          <td class="px-4 py-3 text-slate-600 font-mono text-xs">${escapeHtml(rate)}</td>
+          <td class="px-4 py-3 text-right font-bold text-emerald-700 font-mono">${priceStr}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalMin = data.total_min ?? data.price_min ?? 0;
+      const totalMax = data.total_max ?? data.price_max ?? 0;
+      document.getElementById("total-price-range").textContent = `₹${totalMin} - ₹${totalMax}`;
+    }
+
+    // Step 2: Book Pickup via POST /requests
+    async function handleBookPickup() {
+      dismissError();
+      const name = document.getElementById("customer-name").value.trim();
+      const locality = document.getElementById("customer-locality").value.trim();
+      const slot = document.getElementById("time-slot").value;
+
+      if (!name || !locality) {
+        showError(KabadiApp.getCurrentLang() === "hi" 
+          ? "कृपया नाम और इलाका अवश्य भरें।" 
+          : "Please fill both your Name and Locality.");
+        return;
+      }
+
+      if (!currentEstimate || !currentEstimate.items) {
+        showError("Invalid estimate state.");
+        return;
+      }
+
+      const btn = document.getElementById("book-btn");
+      const btnText = document.getElementById("book-btn-text");
+      const spinner = document.getElementById("book-spinner");
+
+      btn.disabled = true;
+      btnText.textContent = KabadiApp.t("btn_booking");
+      spinner.classList.remove("hidden");
+
+      try {
+        const payload = {
+          name,
+          locality,
+          slot,
+          items: currentEstimate.items,
+          total_min: currentEstimate.total_min ?? 0,
+          total_max: currentEstimate.total_max ?? 0,
+          original_text: document.getElementById("scrap-input").value.trim(),
+          lang: KabadiApp.getCurrentLang()
+        };
+
+        const res = await KabadiApp.apiPost("/requests", payload);
+        activeRequestId = res.id;
+        localStorage.setItem("kabadi_active_req_id", activeRequestId);
+
+        // Hide Step 1 & 2, show Step 3
+        document.getElementById("step1-section").classList.add("hidden");
+        document.getElementById("estimate-result-section").classList.add("hidden");
+        
+        startPolling(activeRequestId);
+      } catch (err) {
+        console.error(err);
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = KabadiApp.t("btn_book_pickup");
+        spinner.classList.add("hidden");
+      }
+    }
+
+    // Step 3: Polling GET /requests/{id} every 5 seconds
+    function startPolling(id) {
+      if (pollingTimer) clearInterval(pollingTimer);
+      document.getElementById("status-section").classList.remove("hidden");
+      document.getElementById("status-section").scrollIntoView({ behavior: 'smooth' });
+
+      // Immediate first check
+      checkStatus(id);
+
+      // Poll every 5000ms
+      pollingTimer = setInterval(() => checkStatus(id), 5000);
+    }
+
+    async function checkStatus(id) {
+      try {
+        const data = await KabadiApp.apiGet(`/requests/${id}`);
+        updateStatusView(data);
+      } catch (err) {
+        console.warn("Status check warning:", err);
+      }
+    }
+
+    function updateStatusView(req) {
+      document.getElementById("meta-req-id").textContent = req.id || "";
+      document.getElementById("meta-customer-name").textContent = req.name || "";
+      document.getElementById("meta-locality").textContent = req.locality || "";
+      document.getElementById("meta-slot").textContent = req.slot || "";
+      document.getElementById("meta-total").textContent = `₹${req.total_min ?? 0} - ₹${req.total_max ?? 0}`;
+
+      const pendingView = document.getElementById("status-pending-view");
+      const acceptedView = document.getElementById("status-accepted-view");
+      const announcement = document.getElementById("accepted-announcement");
+
+      if (req.status === "accepted") {
+        pendingView.classList.add("hidden");
+        acceptedView.classList.remove("hidden");
+
+        const collector = req.collector_name || (KabadiApp.getCurrentLang() === "hi" ? "कबाड़ीवाला साथी" : "Collector");
+        const slot = req.slot || "";
+        
+        announcement.textContent = KabadiApp.t("status_accepted_msg", {
+          collector: `🛵 ${collector}`,
+          slot: slot
+        });
+      } else {
+        pendingView.classList.remove("hidden");
+        acceptedView.classList.add("hidden");
+      }
+    }
+
+    function resetHouseholdForm() {
+      if (pollingTimer) clearInterval(pollingTimer);
+      localStorage.removeItem("kabadi_active_req_id");
+      activeRequestId = null;
+      currentEstimate = null;
+
+      document.getElementById("status-section").classList.add("hidden");
+      document.getElementById("estimate-result-section").classList.add("hidden");
+      document.getElementById("step1-section").classList.remove("hidden");
+      document.getElementById("scrap-input").value = "";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

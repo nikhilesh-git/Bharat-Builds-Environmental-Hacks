@@ -1,0 +1,21 @@
+# Environment variables and secrets
+.env
+credentials.json
+token.json
+
+# SQLite database
+*.db
+*.sqlite3
+
+# Python cache & virtual environment
+__pycache__/
+*.pyc
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Logs & temp files
+*.log
+scratch/
